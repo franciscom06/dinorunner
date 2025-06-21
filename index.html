@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco Runner: Penguin Dash</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        /* Textured Background for Body */
+        body {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%23d1d5db"/><path d="M0 0 L100 100 M100 0 L0 100" stroke="%239ca3af" stroke-width="0.5" opacity="0.4"/><circle cx="20" cy="20" r="2" fill="%239ca3af" opacity="0.5"/><circle cx="80" cy="80" r="3" fill="%239ca3af" opacity="0.5"/><rect x="40" y="40" width="20" height="20" fill="%23a1a1aa" opacity="0.4"/></svg>');
+            background-repeat: repeat;
+        }
+
+        /* Background Layer Styles */
+        .game-container {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.3));
+        }
+
+        .background-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background-size: 50% auto;
+            background-repeat: repeat-x;
+            z-index: 1;
+            animation: slide 30s linear infinite;
+        }
+
+        .background-layer.front {
+            z-index: 2;
+            animation-duration: 15s;
+            opacity: 0.7;
+        }
+
+        /* Environment-specific Backgrounds */
+        .environment-1 .background-layer.back {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 400"><rect width="2000" height="400" fill="%23a8d8ea"/><path d="M0 300 Q500 250 1000 300 T2000 300 L2000 400 L0 400 Z" fill="%23ffffff" fill-opacity="0.9"/><circle cx="100" cy="50" r="20" fill="%23ffffff" fill-opacity="0.6"/><circle cx="600" cy="80" r="25" fill="%23ffffff" fill-opacity="0.6"/><circle cx="1200" cy="60" r="22" fill="%23ffffff" fill-opacity="0.6"/></svg>');
+        }
+
+        .environment-1 .background-layer.front {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 400"><path d="M0 350 Q250 320 500 350 T1000 350 T1500 350 T2000 350 L2000 400 L0 400 Z" fill="%23e6f3fa" fill-opacity="0.8"/></svg>');
+        }
+
+        .environment-2 .background-layer.back {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 400"><rect width="2000" height="400" fill="%23f5e6ca"/><path d="M0 300 Q400 280 800 300 T1600 300 T2000 300 L2000 400 L0 400 Z" fill="%23d2b48c" fill-opacity="0.9"/><path d="M100 300 L120 320 L140 300" fill="none" stroke="%23a0522d" stroke-width="5"/><path d="M600 300 L620 320 L640 300" fill="none" stroke="%23a0522d" stroke-width="5"/></svg>');
+        }
+
+        .environment-2 .background-layer.front {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 400"><path d="M0 350 Q300 330 600 350 T1200 350 T1800 350 T2000 350 L2000 400 L0 400 Z" fill="%23e0c097" fill-opacity="0.7"/></svg>');
+        }
+
+        .environment-3 .background-layer.back {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 400"><rect width="2000" height="400" fill="%23d4e6c3"/><path d="M0 300 Q500 260 1000 300 T2000 300 L2000 400 L0 400 Z" fill="%2399c68e"/><circle cx="200" cy="100" r="30" fill="%238bc34a"/><circle cx="700" cy="120" r="35" fill="%238bc34a"/><circle cx="1300" cy="110" r="32" fill="%238bc34a"/></svg>');
+        }
+
+        .environment-3 .background-layer.front {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 400"><path d="M0 350 Q350 320 700 350 T1400 350 T2000 350 L2000 400 L0 400 Z" fill="%23b2d8a8" fill-opacity="0.8"/></svg>');
+        }
+
+        @keyframes slide {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+
+        /* Menu Styling */
+        .language-menu, .game-over, .paused {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 100;
+        }
+
+        .language-menu .menu-inner, .game-over .menu-inner, .paused .menu-inner {
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="rgba(255,255,255,0.95)"/><path d="M10 90 Q50 80 90 90" fill="none" stroke="%23a8d8ea" stroke-width="4"/><path d="M20 85 Q50 75 80 85" fill="none" stroke="%23a8d8ea" stroke-width="3"/></svg>') center center / cover;
+            border: 3px solid #a8d8ea;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            max-width: 24rem;
+            width: 90%;
+            position: relative;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        /* Tap to Start Styling */
+        .tap-to-start {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 50;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            cursor: pointer
+        }
+
+        .tap-to-start .start-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .language-menu button, .game-over button, .paused button {
+            background: linear-gradient(45deg, #4CAF50, #81C784);
+            transition: all 0.3s ease;
+            transform: perspective(500px) translateZ(0);
+            border-radius: 1rem;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .language-menu button:hover, .game-over button:hover, .paused button:hover {
+            transform: perspective(500px) translateZ(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .language-menu button::after, .game-over button::after, .paused button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: all 0.4s ease;
+        }
+
+        .language-menu button:hover::after, .game-over button:hover::after, .paused button:hover::after {
+            left: 0;
+        }
+
+        /* Existing Animations */
+        @keyframes jump {
+            0% { transform: translateY(0); }
+            40% { transform: translateY(-180px); }
+            100% { transform: translateY(0); }
+        }
+
+        @keyframes land {
+            0% { transform: scaleY(0.9); }
+            50% { transform: scaleY(1.1); }
+            100% { transform: scaleY(1); }
+        }
+
+        .landing {
+            animation: land 0.2s ease-in-out;
+        }
+
+        .penguin-emoji {
+            font-size: 3.5rem;
+            transition: transform 0.1s;
+            position: absolute;
+            bottom: 0;
+            left: 80px;
+            z-index: 10;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .jumping {
+            animation: jump 0.8s cubic-bezier(0.33, 1, 0.68, 1);
+        }
+
+        .obstacle {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .collectible {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            animation: float 1.5s ease-in-out infinite;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0); }
+        }
+
+        @keyframes waddle {
+            0% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+            100% { transform: rotate(-5deg); }
+        }
+
+        .running {
+            animation: waddle 0.3s infinite ease-in-out;
+        }
+
+        .mobile-jump-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            font-size: 2rem;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+            z-index: 20;
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+
+        .mobile-jump-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.6);
+        }
+
+        .difficulty-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            border: 2px solid;
+            transition: all 0.3s ease;
+        }
+
+        .difficulty-easy {
+            color: #4CAF50;
+            border-color: #4CAF50;
+        }
+
+        .difficulty-medium {
+            color: #FF9800;
+            border-color: #FF9800;
+        }
+
+        .difficulty-hard {
+            color: #F44336;
+            border-color: #F44336;
+            animation: shake 0.5s ease-in-out infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+
+        .shake {
+            animation: shake 0.5s ease-in-out infinite;
+        }
+
+
+        .hitbox {
+            position: absolute;
+            border: 2px dashed red;
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        @media (max-width: 640px) {
+            .game-area-mobile {
+                height: 70vh !important;
+                margin-bottom: 1rem;
+            }
+
+            .penguin-emoji {
+                font-size: 4rem;
+            }
+
+            .obstacle {
+                width: 45px !important;
+                height: 45px !important;
+                font-size: 2.5rem;
+            }
+
+            .collectible {
+                width: 35px !important;
+                height: 35px !important;
+                font-size: 1.8rem;
+            }
+
+            .container {
+                padding-left: 0.5rem !important;
+                padding-right: 0.5rem !important;
+            }
+
+            .how-to-play {
+                padding: 1rem !important;
+            }
+
+            .jumping {
+                animation: jump 1s cubic-bezier(0.33, 1, 0.68, 1);
+            }
+
+            .tap-to-start {
+                font-size: 1.5rem;
+            }
+
+            .tap-to-start .start-icon {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .mobile-jump-button {
+                width: 70px;
+                height: 70px;
+                font-size: 1.5rem;
+                bottom: 15px;
+                right: 15px;
+            }
+
+            .penguin-emoji {
+                font-size: 3.5rem;
+            }
+        }
+    </style>
+</head>
+<body class="font-sans">
+    <!-- Language Selection Menu -->
+    <div id="language-menu" class="language-menu fixed inset-0 flex items-center justify-center z-50">
+        <div class="menu-inner">
+            <h2 class="text-2xl md:text-3xl font-bold text-blue-600 mb-6">Select Language / Selecionar Idioma</h2>
+            <div class="flex flex-col space-y-4">
+                <button id="english-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-lg">
+                    <i class="fas fa-language mr-2"></i>English
+                </button>
+                <button id="portuguese-btn" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg text-lg">
+                    <i class="fas fa-language mr-2"></i>Português
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Jump Button -->
+    <button id="mobile-jump-btn" class="mobile-jump-button hidden" aria-label="Jump">
+        ⬆️
+    </button>
+
+    <!-- Main Game Container -->
+    <div class="container mx-auto px-4 py-4 md:py-8 hidden" id="game-container">
+        <div class="text-center mb-4 md:mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-blue-600 mb-2" id="game-title">Eco Runner: Penguin Dash</h1>
+            <p class="text-sm md:text-base text-gray-600" id="game-subtitle">Help the penguin collect recyclables and avoid pollution!</p>
+        </div>
+        
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex space-x-2">
+                <button id="pause-btn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-pause mr-2"></i><span id="pause-text">Pause</span>
+                </button>
+                <button id="install-btn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg hidden">
+                    <i class="fas fa-download mr-2"></i><span id="install-text">Install</span>
+                </button>
+            </div>
+            <div class="flex space-x-4">
+                <div class="bg-white p-2 md:p-3 rounded-lg shadow">
+                    <span class="font-bold text-sm md:text-base" id="score-label">Score:</span>
+                    <span id="score" class="ml-2">0</span>
+                </div>
+                <div class="bg-white p-2 md:p-3 rounded-lg shadow">
+                    <span class="font-bold text-sm md:text-base" id="high-score-label">High Score:</span>
+                    <span id="high-score" class="ml-2">0</span>
+                </div>
+                <div class="bg-white p-2 md:p-3 rounded-lg shadow">
+                    <span class="font-bold text-sm md:text-base">Speed:</span>
+                    <span id="speed-display" class="ml-2">5</span>
+                </div>                
+            </div>
+        </div>
+        
+        <div id="game-area" class="relative w-full h-96 md:h-96 rounded-xl overflow-hidden game-container environment-1 game-area-mobile">
+            <div class="background-layer back"></div>
+            <div class="background-layer front"></div>
+            <div id="penguin" class="penguin-emoji running">🐧</div>
+            <div class="difficulty-indicator difficulty-easy" id="difficulty-indicator">Easy</div>
+            <div id="tap-to-start" class="tap-to-start">
+                <div class="start-icon">🎮</div>
+                <div>Tap to Start</div>
+            </div>
+        </div>
+        
+        <div id="game-over" class="game-over fixed inset-0 flex items-center justify-center hidden">
+            <div class="menu-inner">
+                <h2 class="text-2xl md:text-3xl font-bold text-red-500 mb-4" id="game-over-title">Game Over!</h2>
+                <p class="text-lg md:text-xl mb-2" id="final-score-text">Your score: <span id="final-score" class="font-bold">0</span></p>
+                <p class="text-lg md:text-xl mb-6" id="final-high-score-text">High score: <span id="final-high-score" class="font-bold">0</span></p>
+                
+                <div id="eco-tip" class="bg-blue-50 p-3 md:p-4 rounded-lg mb-6">
+                    <h3 class="font-bold text-blue-600 mb-2" id="eco-tip-title">Eco Tip</h3>
+                    <p class="text-sm md:text-base" id="eco-tip-text">Recycling one aluminum can saves enough energy to run a TV for three hours!</p>
+                </div>
+                
+                <button id="restart-btn" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg text-lg">
+                    <i class="fas fa-redo mr-2"></i><span id="restart-text">Play Again</span>
+                </button>
+            </div>
+        </div>
+        
+        <div id="paused-screen" class="paused fixed inset-0 flex items-center justify-center hidden">
+            <div class="menu-inner">
+                <h2 class="text-2xl md:text-3xl font-bold text-yellow-500 mb-6" id="paused-title">Game Paused</h2>
+                <button id="resume-btn" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg text-lg">
+                    <i class="fas fa-play mr-2"></i><span id="resume-text">Resume</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="mt-4 md:mt-8 bg-white p-4 md:p-6 rounded-lg shadow how-to-play">
+            <h2 class="text-xl md:text-2xl font-bold text-blue-600 mb-3 md:mb-4" id="how-to-play-title">How to Play</h2>
+            <ul class="list-disc pl-5 space-y-1 md:space-y-2 text-sm md:text-base" id="how-to-play-list">
+                <li>Click to make the penguin jump</li>
+                <li>Collect recyclable items to earn points</li>
+                <li>Avoid obstacles like oil spills and trash</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        // Game variables
+        let score = 0;
+        let highScore = localStorage.getItem('highScore') || 0;
+        let gameSpeed = 5;
+        let baseGameSpeed = 5;
+        let isJumping = false;
+        let isGameOver = false;
+        let isPaused = false;
+        let gameStarted = false;
+        let gameInterval;
+        let obstacleInterval;
+        let collectibleInterval;
+        let speedIncreaseInterval;
+        let environmentChangeThreshold = 500;
+        let showHitboxes = false;
+        let currentLanguage = 'english';
+        let isMobile = window.innerWidth <= 768;
+        let difficultyLevel = 'easy';
+        let gameTime = 0;
+
+        // Progressive speed increase settings
+        const speedIncrease = isMobile ? 0.4 : 0.5; // instead of 0.2 / 0.3
+        const speedIncreaseInterval_ms = 2000; // Increase speed every 2 seconds
+        const maxSpeed = isMobile ? 20 : 25; // Maximum speed cap
+
+        // Mobile-friendly intervals
+        const mobileObstacleInterval = isMobile ? 2200 : 1800;
+        const mobileCollectibleInterval = isMobile ? 1500 : 1200;
+
+        // Language texts
+        const translations = {
+            english: {
+                title: "Eco Runner: Penguin Dash",
+                subtitle: "Help the penguin collect recyclables and avoid pollution!",
+                pause: "Pause",
+                install: "Install",
+                score: "Score:",
+                highScore: "High Score:",
+                gameOver: "Game Over!",
+                finalScore: "Your score:",
+                finalHighScore: "High score:",
+                ecoTip: "Eco Tip",
+                restart: "Play Again",
+                paused: "Game Paused",
+                resume: "Resume",
+                howToPlay: "How to Play",
+                instructions: [
+                    "Click or tap the jump button to make the penguin jump",
+                    "Collect recyclable items to earn points",
+                    "Avoid obstacles like oil spills and trash"
+                ],
+                ecoTips: [
+                    "Recycling one ton of paper saves 17 trees and 26,500 liters of water.",
+                    "Plastic water bottles take about 450 years to decompose.",
+                    "Glass can be recycled endlessly without loss of quality or purity.",
+                    "Recycling aluminum uses only 5% of the energy needed to make new aluminum.",
+                    "On average, each person generates 1.8kg of trash per day.",
+                    "Plastic dumped in the ocean kills about 1 million marine creatures per year."
+                ],
+                difficulty: {
+                    easy: "Easy",
+                    medium: "Medium",
+                    hard: "Hard",
+                    extreme: "Extreme"
+                },
+                tapToStart: "Tap to Start"
+            },
+            portuguese: {
+                title: "Eco Runner: Corrida do Pinguim",
+                subtitle: "Ajude o pinguim a coletar recicláveis e evitar poluição!",
+                pause: "Pausar",
+                install: "Instalar",
+                score: "Pontuação:",
+                highScore: "Recorde:",
+                gameOver: "Fim de Jogo!",
+                finalScore: "Sua pontuação:",
+                finalHighScore: "Recorde:",
+                ecoTip: "Dica Ecológica",
+                restart: "Jogar Novamente",
+                paused: "Jogo Pausado",
+                resume: "Continuar",
+                howToPlay: "Como Jogar",
+                instructions: [
+                    "Clique ou toque no botão para fazer o pinguim saltar",
+                    "Apanhe itens recicláveis para ganhar pontos",
+                    "Evite obstáculos como derramamentos de óleo e lixo"
+                ],
+                ecoTips: [
+                    "Reciclar uma tonelada de papel salva 17 árvores e 26.500 litros de água.",
+                    "Garrafas plásticas levam cerca de 450 anos para se decompor.",
+                    "O vidro pode ser reciclado infinitamente sem perda de qualidade.",
+                    "Reciclar alumínio usa apenas 5% da energia necessária para fazer alumínio novo.",
+                    "Em média, cada pessoa gera 1,8kg de lixo por dia.",
+                    "Plástico jogado no oceano mata cerca de 1 milhão de criaturas marinhas por ano."
+                ],
+                difficulty: {
+                    easy: "Fácil",
+                    medium: "Médio",
+                    hard: "Difícil",
+                    extreme: "Extremo"
+                },
+                tapToStart: "Toque para Começar"
+            }
+        };
+
+        // DOM elements
+        const gameContainer = document.getElementById('game-container');
+        const languageMenu = document.getElementById('language-menu');
+        const englishBtn = document.getElementById('english-btn');
+        const portugueseBtn = document.getElementById('portuguese-btn');
+        const gameArea = document.getElementById('game-area');
+        const penguin = document.getElementById('penguin');
+        const scoreDisplay = document.getElementById('score');
+        const highScoreDisplay = document.getElementById('high-score');
+        const gameOverScreen = document.getElementById('game-over');
+        const pausedScreen = document.getElementById('paused-screen');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const finalHighScoreDisplay = document.getElementById('final-high-score');
+        const restartBtn = document.getElementById('restart-btn');
+        const pauseBtn = document.getElementById('pause-btn');
+        const resumeBtn = document.getElementById('resume-btn');
+        const installBtn = document.getElementById('install-btn');
+        const ecoTip = document.getElementById('eco-tip');
+        const mobileJumpBtn = document.getElementById('mobile-jump-btn');
+        const difficultyIndicator = document.getElementById('difficulty-indicator');
+        const tapToStart = document.getElementById('tap-to-start');
+
+        // Show mobile jump button on mobile devices
+        if (isMobile) {
+            mobileJumpBtn.classList.remove('hidden');
+        }
+
+        // Initialize high score display
+        highScoreDisplay.textContent = highScore;
+
+        function updateSpeedDisplay() {
+            const speedDisplay = document.getElementById('speed-display');
+            speedDisplay.textContent = gameSpeed.toFixed(1);
+        }
+
+        // Mobile jump button
+        mobileJumpBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!gameStarted) {
+                startGame();
+            } else if (!isGameOver && !isJumping && !isPaused) {
+                jump();
+            }
+        });
+
+        mobileJumpBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (!gameStarted) {
+                startGame();
+            } else if (!isGameOver && !isJumping && !isPaused) {
+                jump();
+            }
+        });
+
+        // Language selection
+        englishBtn.addEventListener('click', () => {
+            try {
+                currentLanguage = 'english';
+                setLanguage('english');
+                languageMenu.classList.add('hidden');
+                gameContainer.classList.remove('hidden');
+                if (isMobile) mobileJumpBtn.classList.remove('hidden');
+                resetGame();
+            } catch (error) {
+                console.error('Error switching to English:', error);
+            }
+        });
+
+        portugueseBtn.addEventListener('click', () => {
+            try {
+                currentLanguage = 'portuguese';
+                setLanguage('portuguese');
+                languageMenu.classList.add('hidden');
+                gameContainer.classList.remove('hidden');
+                if (isMobile) mobileJumpBtn.classList.remove('hidden');
+                resetGame();
+            } catch (error) {
+                console.error('Error switching to Portuguese:', error);
+            }
+        });
+
+        function setLanguage(lang) {
+            try {
+                const texts = translations[lang];
+                if (!texts) throw new Error(`Language ${lang} not found`);
+
+                document.getElementById('game-title').textContent = texts.title;
+                document.getElementById('game-subtitle').textContent = texts.subtitle;
+                document.getElementById('pause-text').textContent = texts.pause;
+                document.getElementById('install-text').textContent = texts.install;
+                document.getElementById('score-label').textContent = texts.score;
+                document.getElementById('high-score-label').textContent = texts.highScore;
+                document.getElementById('game-over-title').textContent = texts.gameOver;
+                document.getElementById('final-score-text').textContent = texts.finalScore;
+                document.getElementById('final-high-score-text').textContent = texts.finalHighScore;
+                document.getElementById('eco-tip-title').textContent = texts.ecoTip;
+                document.getElementById('restart-text').textContent = texts.restart;
+                document.getElementById('paused-title').textContent = texts.paused;
+                document.getElementById('resume-text').textContent = texts.resume;
+                document.getElementById('how-to-play-title').textContent = texts.howToPlay;
+                tapToStart.textContent = texts.tapToStart;
+                
+                const howToPlayList = document.getElementById('how-to-play-list');
+                howToPlayList.innerHTML = '';
+                texts.instructions.forEach(instruction => {
+                    const li = document.createElement('li');
+                    li.textContent = instruction;
+                    howToPlayList.appendChild(li);
+                });
+                
+                if (ecoTip.querySelector('p')) {
+                    ecoTip.querySelector('p').textContent = texts.ecoTips[0];
+                }
+
+                updateDifficultyIndicator();
+            } catch (error) {
+                console.error('Error setting language:', error);
+            }
+        }
+
+        function updateDifficultyIndicator() {
+            const texts = translations[currentLanguage].difficulty;
+            difficultyIndicator.className = 'difficulty-indicator';
+
+            if (gameSpeed >= 5) {
+                difficultyLevel = 'easy';
+                difficultyIndicator.textContent = texts.easy;
+                difficultyIndicator.classList.add('difficulty-easy');
+            } else if (gameSpeed <= 12) {
+                difficultyLevel = 'medium';
+                difficultyIndicator.textContent = texts.medium;
+                difficultyIndicator.classList.add('difficulty-medium');
+            } else if (gameSpeed <= 17) {
+                difficultyLevel = 'hard';
+                difficultyIndicator.textContent = texts.hard;
+                difficultyIndicator.classList.add('difficulty-hard');
+            } else {
+                difficultyLevel = 'extreme';
+                difficultyIndicator.textContent = texts.extreme;
+                difficultyIndicator.classList.add('difficulty-hard', 'shake');
+            }
+        }
+
+
+
+
+
+        // Pause/Resume functionality
+        pauseBtn.addEventListener('click', pauseGame);
+        resumeBtn.addEventListener('click', resumeGame);
+
+        function pauseGame() {
+            if (isGameOver || !gameStarted) return;
+            
+            isPaused = true;
+            clearInterval(gameInterval);
+            clearInterval(obstacleInterval);
+            clearInterval(collectibleInterval);
+            
+            penguin.classList.remove('running');
+            pausedScreen.classList.remove('hidden');
+        }
+
+        function resumeGame() {
+            if (isGameOver || !gameStarted) return;
+            
+            isPaused = false;
+            pausedScreen.classList.add('hidden');
+            penguin.classList.add('running');
+            
+            gameInterval = setInterval(updateGame, 16);
+            obstacleInterval = setInterval(createObstacle, mobileObstacleInterval);
+            collectibleInterval = setInterval(createCollectible, mobileCollectibleInterval);
+            if (showHitboxes) {
+                updateHitboxes();
+            }
+        }
+
+        // PWA installation
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.classList.remove('hidden');
+        });
+
+        installBtn.addEventListener('click', () => {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    installBtn.classList.add('hidden');
+                }
+                deferredPrompt = null;
+            });
+        });
+
+        // Game controls
+        gameArea.addEventListener('click', (e) => {
+            if (!gameStarted) {
+                startGame();
+                return;
+            }
+            if (!isGameOver && !isJumping && !isPaused) {
+                jump();
+            }
+            
+            if (isGameOver) {
+                e.stopPropagation();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if ((e.code === 'Space' || e.key === ' ') && !isGameOver && !isJumping && !isPaused && gameStarted) {
+                e.preventDefault();
+                jump();
+            }
+            
+            if (e.code === 'KeyP' && !isGameOver && gameStarted) {
+                e.preventDefault();
+                if (isPaused) {
+                    resumeGame();
+                } else {
+                    pauseGame();
+                }
+            }
+
+            if (e.code === 'KeyH') {
+                showHitboxes = !showHitboxes;
+                updateHitboxes();
+            }
+        });
+
+        restartBtn.addEventListener('click', () => {
+            try {
+                gameOverScreen.classList.add('hidden');
+                resetGame();
+            } catch (error) {
+                console.error('Error restarting game:', error);
+            }
+        });
+
+        function startGame() {
+            if (gameStarted) return;
+            gameStarted = true;
+            score = 0;
+            isGameOver = false;
+            isPaused = false;
+            gameSpeed = 5;
+            difficultyLevel = 'easy';
+            updateScore();
+            updateDifficultyIndicator();
+            updateSpeedDisplay();
+
+            document.querySelectorAll('.obstacle, .collectible, .hitbox').forEach(el => el.remove());
+            penguin.classList.remove('hidden');
+            penguin.classList.add('running');
+
+            tapToStart.style.display = 'none';
+
+            gameInterval = setInterval(updateGame, 16);
+            obstacleInterval = setInterval(createObstacle, mobileObstacleInterval);
+            collectibleInterval = setInterval(createCollectible, mobileCollectibleInterval);
+            speedIncreaseInterval = setInterval(increaseGameSpeed, speedIncreaseInterval_ms);
+            if (showHitboxes) {
+                updateHitboxes();
+            }
+        }
+
+        function increaseGameSpeed() {
+            if (isGameOver || isPaused || !gameStarted) return;
+            gameSpeed = Math.min(gameSpeed + speedIncrease, maxSpeed);
+            console.log("Current Speed: ", gameSpeed); // Log for debugging
+            updateDifficultyIndicator();
+            updateSpeedDisplay();
+        }
+
+
+
+
+        function updateHitboxes() {
+            document.querySelectorAll('.hitbox').forEach(el => el.remove());
+            
+            if (showHitboxes) {
+                const penguinRect = penguin.getBoundingClientRect();
+                const penguinHitbox = document.createElement('div');
+                penguinHitbox.className = 'hitbox';
+                penguinHitbox.style.width = `${penguinRect.width}px`;
+                penguinHitbox.style.height = `${penguinRect.height}px`;
+                penguinHitbox.style.left = `${penguin.offsetLeft}px`;
+                penguinHitbox.style.bottom = `${parseInt(penguin.style.bottom || '0')}px`;
+                gameArea.appendChild(penguinHitbox);
+                
+                document.querySelectorAll('.obstacle').forEach(obstacle => {
+                    const obstacleRect = obstacle.getBoundingClientRect();
+                    const hitbox = document.createElement('div');
+                    hitbox.className = 'hitbox';
+                    hitbox.style.width = `${obstacleRect.width}px`;
+                    hitbox.style.height = `${obstacleRect.height}px`;
+                    hitbox.style.left = `${parseInt(obstacle.style.left)}px`;
+                    hitbox.style.bottom = '0px';
+                    gameArea.appendChild(hitbox);
+                });
+                
+                document.querySelectorAll('.collectible').forEach(collectible => {
+                    const collectibleRect = collectible.getBoundingClientRect();
+                    const hitbox = document.createElement('div');
+                    hitbox.className = 'hitbox';
+                    hitbox.style.width = `${collectibleRect.width}px`;
+                    hitbox.style.height = `${collectibleRect.height}px`;
+                    hitbox.style.left = `${parseInt(collectible.style.left)}px`;
+                    hitbox.style.bottom = `${parseInt(collectible.style.bottom)}px`;
+                    gameArea.appendChild(hitbox);
+                });
+            }
+        }
+
+        function updateGame() {
+            if (isGameOver || isPaused || !gameStarted) return;
+            
+            document.querySelectorAll('.obstacle').forEach(obstacle => {
+                const obstacleLeft = parseInt(obstacle.style.left || '0');
+                const newLeft = obstacleLeft - gameSpeed;
+                obstacle.style.left = `${newLeft}px`;
+                
+                if (newLeft < -50) {
+                    obstacle.remove();
+                    return;
+                }
+                
+                if (checkCollision(penguin, obstacle)) {
+                    gameOver();
+                }
+            });
+            
+            document.querySelectorAll('.collectible').forEach(collectible => {
+                const collectibleLeft = parseInt(collectible.style.left || '0');
+                const newLeft = collectibleLeft - gameSpeed;
+                collectible.style.left = `${newLeft}px`;
+                
+                if (newLeft < -30) {
+                    collectible.remove();
+                    return;
+                }
+                
+                if (checkCollision(penguin, collectible)) {
+                    collectItem(collectible);
+                }
+            });
+            
+            if (showHitboxes) {
+                updateHitboxes();
+            }
+            
+            // Environment changes based on score
+            if (score >= environmentChangeThreshold * 2) {
+                gameArea.className = 'relative w-full h-96 md:h-96 rounded-xl overflow-hidden game-container environment-3 game-area-mobile';
+            } else if (score >= environmentChangeThreshold) {
+                gameArea.className = 'relative w-full h-96 md:h-96 rounded-xl overflow-hidden game-container environment-2 game-area-mobile';
+            } else {
+                gameArea.className = 'relative w-full h-96 md:h-96 rounded-xl overflow-hidden game-container environment-1 game-area-mobile';
+            }
+        }
+
+        function createObstacle() {
+            if (isGameOver || isPaused || !gameStarted) return;
+
+            const obstacle = document.createElement('div');
+            obstacle.className = 'obstacle';
+            obstacle.id = 'obstacle-' + Date.now();
+
+            const obstacleTypes = ['oil-spill', 'plastic-bag', 'trash-can'];
+            const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+
+            switch(type) {
+                case 'oil-spill':
+                    obstacle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#0066CC" opacity="0.5"/><path d="M10 10 Q50 5 90 10 Q50 15 10 10" fill="#000000" opacity="0.3"/><path d="M10 30 Q50 25 90 30 Q50 35 10 30" fill="#000000" opacity="0.3"/><path d="M10 50 Q50 45 90 50 Q50 55 10 50" fill="#000000" opacity="0.3"/></svg>';
+                    break;
+                case 'plastic-bag':
+                    obstacle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M20 20 C30 10 70 10 80 20 L80 80 C75 85 65 90 50 80 C35 90 25 85 20 80 Z" fill="#D3D3D3" opacity="0.6"/><path d="M30 20 C35 5 65 5 70 20" fill="none" stroke="#A9A9A9" stroke-width="5"/><path d="M40 30 L60 65" stroke="#A9A9A9" stroke-width="3" opacity="0.7"/></svg>';
+                    break;
+                case 'trash-can':
+                    obstacle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="25" y="20" width="50" height="60" rx="5" fill="#696969"/><rect x="20" y="15" width="60" height="10" rx="5" fill="#808080"/><rect x="30" y="25" width="40" height="50" fill="#555555"/><path d="M35 30 L40 70" stroke="#FF6347" stroke-width="3"/><path d="M55 30 L60 55" stroke="#41A9C4" stroke-width="3"/></svg>';
+                    break;
+            }
+
+            obstacle.style.left = `${gameArea.offsetWidth}px`;
+            obstacle.style.bottom = '0px';
+            gameArea.appendChild(obstacle);
+
+            if (showHitboxes) {
+                updateHitboxes();
+            }
+        }
+
+
+        function createCollectible() {
+            if (isGameOver || isPaused || !gameStarted) return;
+
+            const collectible = document.createElement('div');
+            collectible.className = 'collectible';
+            collectible.id = 'collectible-' + Date.now();
+
+            const types = [
+                { type: 'bottle', points: 10 },
+                { type: 'can', points: 20 },
+                { type: 'paper', points: 30 }
+            ];
+
+            const item = types[Math.floor(Math.random() * types.length)];
+
+            switch(item.type) {
+                case 'bottle':
+                    collectible.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="35" y="10" width="30" height="10" rx="3" fill="#444444"/><rect x="30" y="20" width="40" height="60" rx="5" fill="#006AEF" opacity="0.7"/><rect x="35" y="30" width="30" height="20" fill="#FFFFFF" opacity="0.5"/><text x="50" y="40" font-size="10" fill="#000000" text-anchor="middle">H2O</text></svg>';
+                    break;
+                case 'can':
+                    collectible.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect x="30" y="15" width="40" height="70" rx="10" fill="#C0C0C0"/><rect x="35" y="10" width="30" height="10" rx="5" fill="#A9A9A9"/><path d="M40 15 H60 L55 10 H45 Z" fill="#999999"/><rect x="35" y="30" width="30" height="30" fill="#FFFFFF" opacity="0.5"/></svg>';
+                    break;
+                case 'paper':
+                    collectible.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M20 20 L80 20 L90 80 L80 80 L20 80 L10 40 Z" fill="#FFFDD0"/><path d="M30 30 H70" stroke="#000000" stroke-width="2"/><path d="M30 40 H70" stroke="#000000" stroke-width="2"/><path d="M30 50 H60" stroke="#000000" stroke-width="2"/><path d="M20 80 L30 70" fill="#FFFDD0"/><path d="M80 20 L70 70" fill="#FFFDD0"/></svg>';
+                    break;
+            }
+
+            collectible.dataset.points = item.points;
+            collectible.style.left = `${gameArea.offsetWidth}px`;
+            const minHeight = isMobile ? 30 : 50;
+            const maxHeight = isMobile ? 60 : 80;
+            collectible.style.bottom = `${Math.random() * (maxHeight - minHeight) + minHeight}px`;
+            gameArea.appendChild(collectible);
+
+            if (showHitboxes) {
+                updateHitboxes();
+            }
+        }
+
+
+        function jump() {
+            if (isJumping) return;
+            
+            isJumping = true;
+            penguin.classList.add('jumping');
+            penguin.classList.remove('running');
+            
+            const jumpDuration = isMobile ? 800 : 500;
+            
+            setTimeout(() => {
+                penguin.classList.remove('jumping');
+                penguin.classList.add('running');
+                isJumping = false;
+                if (showHitboxes) {
+                    updateHitboxes();
+                }
+            }, jumpDuration);
+        }
+
+        function checkCollision(character, object) {
+            const characterRect = character.getBoundingClientRect();
+            const objectRect = object.getBoundingClientRect();
+            
+            const tolerance = isMobile ? 10 : 5;
+            
+            return !(
+                characterRect.right < objectRect.left + tolerance || 
+                characterRect.left > objectRect.right - tolerance || 
+                characterRect.bottom < objectRect.top + tolerance || 
+                characterRect.top > objectRect.bottom - tolerance
+            );
+        }
+
+        function collectItem(item) {
+            const points = parseInt(item.dataset.points);
+            score += points;
+            updateScore();
+            updateSpeedDisplay();
+            item.remove();
+            
+            if (isMobile) {
+                mobileJumpBtn.style.background = 'linear-gradient(45deg, #FFD700, #FFA500)';
+                setTimeout(() => {
+                    mobileJumpBtn.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
+                }, 200);
+            }
+            
+            if (showHitboxes) {
+                updateHitboxes();
+            }
+        }
+
+        function updateScore() {
+            scoreDisplay.textContent = score;
+            
+            if (score > highScore) {
+                highScore = score;
+                highScoreDisplay.textContent = highScore;
+                localStorage.setItem('highScore', highScore);
+            }
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            gameStarted = false;
+            clearInterval(gameInterval);
+            clearInterval(obstacleInterval);
+            clearInterval(collectibleInterval);
+            
+            penguin.classList.add('hidden');
+            document.querySelectorAll('.obstacle, .collectible, .hitbox').forEach(el => el.remove());
+            
+            console.log('Game Over - Score:', score, 'High Score:', highScore);
+            
+            finalScoreDisplay.textContent = score;
+            finalHighScoreDisplay.textContent = highScore;
+            
+            document.getElementById('final-score-text').innerHTML = `${translations[currentLanguage].finalScore} <span id="final-score" class="font-bold">${score}</span>`;
+            document.getElementById('final-high-score-text').innerHTML = `${translations[currentLanguage].finalHighScore} <span id="final-high-score" class="font-bold">${highScore}</span>`;
+            
+            const tips = translations[currentLanguage].ecoTips;
+            ecoTip.querySelector('p').textContent = tips[Math.floor(Math.random() * tips.length)];
+            
+            gameOverScreen.classList.add('hidden');
+            requestAnimationFrame(() => {
+                gameOverScreen.classList.remove('hidden');
+            });
+        }
+
+        function resetGame() {
+            gameStarted = false;
+            score = 0;
+            gameSpeed = isMobile ? 5 : 5;
+            isGameOver = false;
+            isPaused = false;
+            isJumping = false;
+            difficultyLevel = 'easy';
+
+            document.querySelectorAll('.obstacle, .collectible, .hitbox').forEach(el => el.remove());
+
+            penguin.style.bottom = '0px';
+            penguin.style.left = '80px';
+            penguin.classList.remove('hidden', 'jumping');
+            penguin.classList.add('running');
+
+            gameArea.className = 'relative w-full h-96 md:h-96 rounded-xl overflow-hidden game-container environment-1 game-area-mobile';
+
+            tapToStart.style.display = 'flex';
+
+            updateScore();
+            updateDifficultyIndicator();
+            updateSpeedDisplay();
+
+            clearInterval(gameInterval);
+            clearInterval(obstacleInterval);
+            clearInterval(collectibleInterval);
+            clearInterval(speedIncreaseInterval);
+
+            if (showHitboxes) {
+                updateHitboxes();
+            }
+        }
+
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then(registration => {
+                    console.log('ServiceWorker registration successful');
+                }).catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+
+        function adjustGameArea() {
+            isMobile = window.innerWidth <= 768;
+            
+            if (window.innerWidth <= 640) {
+                gameArea.style.height = '70vh';
+                if (!mobileJumpBtn.classList.contains('hidden')) {
+                    mobileJumpBtn.classList.remove('hidden');
+                }
+            } else {
+                gameArea.style.height = '24rem';
+                if (window.innerWidth > 768) {
+                    mobileJumpBtn.classList.add('hidden');
+                }
+            }
+            if (showHitboxes) {
+                updateHitboxes();
+            }
+        }
+
+        adjustGameArea();
+        window.addEventListener('resize', adjustGameArea);
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        document.addEventListener('contextmenu', function(e) {
+            if (isMobile) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
